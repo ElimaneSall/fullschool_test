@@ -1,0 +1,130 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ master, develop, deploiement ]
+  pull_request:
+    branches: [ master, develop, deploiement ]
+
+jobs:
+  # 1) Analyse & tests (Linux)
+  analyze_and_test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Cache Pub packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.33.0'
+          channel: 'stable'
+
+      - name: Verify versions
+        run: |
+          flutter --version
+          dart --version
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Flutter analyze
+        run: flutter analyze
+
+      - name: Flutter test (with coverage)
+        run: flutter test --coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage
+
+  # 2) Build Android APK (Ubuntu)
+  build_android:
+    name: Build Android
+    needs: analyze_and_test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Cache Pub packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.33.0'
+          channel: 'stable'
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Build Android release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # 3) Build iOS archive (macOS)
+  build_ios:
+    name: Build iOS
+    needs: analyze_and_test
+    runs-on: macos-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Cache Pub packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.pub-cache
+          key: macos-pub-${{ hashFiles('**/pubspec.yaml') }}
+          restore-keys: |
+            macos-pub-
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.33.0'
+          channel: 'stable'
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      # Le flag --no-codesign permet de builder sans provisioning profiles
+      - name: Build iOS (no codesign)
+        run: flutter build ios --release --no-codesign
+
+      - name: Upload iOS .app artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Runner.app
+          path: build/ios/iphoneos/Runner.app
