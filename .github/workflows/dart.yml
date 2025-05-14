@@ -2,12 +2,11 @@ name: Flutter CI
 
 on:
   push:
-    branches: [ master, develop, deploiement ]
+    branches: [ master, develop ]
   pull_request:
-    branches: [ master, develop, deploiement ]
+    branches: [ master, develop ]
 
 jobs:
-  # 1) Analyse & tests (Linux)
   analyze_and_test:
     name: Analyze & Test
     runs-on: ubuntu-latest
@@ -26,11 +25,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Setup Flutter
+      - name: Setup Flutter (dev channel)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.33.0'
-          channel: 'stable'
+          channel: 'dev'
 
       - name: Verify versions
         run: |
@@ -52,7 +51,6 @@ jobs:
           name: coverage-report
           path: coverage
 
-  # 2) Build Android APK (Ubuntu)
   build_android:
     name: Build Android
     needs: analyze_and_test
@@ -72,11 +70,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pub-
 
-      - name: Setup Flutter
+      - name: Setup Flutter (dev channel)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.33.0'
-          channel: 'stable'
+          channel: 'dev'
 
       - name: Flutter pub get
         run: flutter pub get
@@ -90,7 +88,6 @@ jobs:
           name: app-release.apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-  # 3) Build iOS archive (macOS)
   build_ios:
     name: Build iOS
     needs: analyze_and_test
@@ -110,16 +107,15 @@ jobs:
           restore-keys: |
             macos-pub-
 
-      - name: Setup Flutter
+      - name: Setup Flutter (dev channel)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.33.0'
-          channel: 'stable'
+          channel: 'dev'
 
       - name: Flutter pub get
         run: flutter pub get
 
-      # Le flag --no-codesign permet de builder sans provisioning profiles
       - name: Build iOS (no codesign)
         run: flutter build ios --release --no-codesign
 
