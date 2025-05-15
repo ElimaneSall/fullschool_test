@@ -2,26 +2,29 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
-  build_android:
-    name: Build Android
+  build-android:
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.33.0'  # adapte à ta version
+          flutter-version: '3.19.0'
+          channel: stable
 
       - name: Install dependencies
         run: flutter pub get
+
+      - name: Analyze code
+        run: flutter analyze
 
       - name: Run tests
         run: flutter test
@@ -29,35 +32,8 @@ jobs:
       - name: Build APK
         run: flutter build apk --release
 
-      # - name: Upload artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: app-release.apk
-      #     path: build/app/outputs/flutter-apk/app-release.apk
-
-  build_ios:
-    name: Build iOS
-    runs-on: macos-latest
-    if: github.event_name == 'push'  # Tu peux adapter cette condition
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
         with:
-          flutter-version: '3.33.0'
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
-
-      - name: Build iOS
-        run: flutter build ios --release --no-codesign
-
-      # Pour signer automatiquement et uploader sur TestFlight, tu peux ajouter des steps avec fastlane
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
