@@ -7,7 +7,7 @@ class StudentHomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(), // Drawer à personnaliser plus tard
+      drawer: Drawer(), // Drawer à personnaliser plus tard OK
       appBar: AppBar(
         backgroundColor: Colors.green,
         elevation: 0,
